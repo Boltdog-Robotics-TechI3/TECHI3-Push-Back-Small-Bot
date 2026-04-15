@@ -164,6 +164,13 @@ class PIDController {
         double getError();
 
         /**
+         * Returns the previous error between the current measurement and the setpoint.
+         * 
+         * @return the previous error between the current measurement and the setpoint.
+         */
+        double getPreviousError();
+
+        /**
          * Gets the current setpoint of the PID controller.
          * 
          * @return the current setpoint

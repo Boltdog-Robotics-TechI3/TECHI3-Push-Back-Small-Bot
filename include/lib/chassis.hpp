@@ -169,21 +169,64 @@ class Chassis {
          */
         void setBrakeMode(pros::motor_brake_mode_e_t mode);
 
+        struct moveToPoseParams {
+            Pose targetPose;
+            int timeout = 3000;
+            int smallErrorTimeout = 500;
+            int largeErrorTimeout = 1000;
+            int maxMoveSpeed = 50;
+            int maxMoveAccel = 0;
+            float smallMoveErrorRange = 1.5;
+            float largeMoveErrorRange = 2.5;
+            int maxTurnSpeed = 30;
+            int maxTurnAccel = 0;
+            float smallTurnErrorRange = 0.02;
+            float largeTurnErrorRange = 0.04;
+            float minAlignDistance = 5.0;
+        };
+
         /**
-         * @brief Move the robot to a specific position using PID control.
-         * 
-         * @param targetPose The target pose to move to.
-         * @param timeout The amount of time in milliseconds that the robot will try to reach the pose before giving up.
-         * @param maxSpeed The maximum speed the robot can travel, from 0 to 127.
+         * @brief Move the robot to a specific position using PID control. This method blocks until the target position is reached.
+         *
+         * @param targetPose The target pose to move to (defaults to the origin).
+         * @param timeout The amount of time in milliseconds that the robot will try to reach the pose before giving up (default 3000 milliseconds).
+         * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
+         * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
+         * @param maxMoveSpeed The maximum speed the robot can travel, from 0 to 127 (defaults to 50)
+         * @param maxMoveAccel The maximum acceleration and decceleration the robot can reach (defaults to 127). 
+         * @param smallMoveErrorRange The range the move error needs to be within for the small error timeout in inches (defaults to 0.5 inches)
+         * @param largeMoveErrorRange The range the move error needs to be within for the large error timeout in inches (defaults to 1.5 inches)
+         * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
+         * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
+         * @param smallTurnErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
+         * @param largeTurnErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
          */
-        void virtual moveToPose(const Pose& targetPose, int timeout, int maxSpeed) = 0;
+        void virtual moveToPose(moveToPoseParams params) = 0;
+
+        struct turnToAngleParams {
+            int targetAngle = 0;
+            int timeout = 1500;
+            int maxTurnSpeed = 50;
+            int maxTurnAccel = 0;
+            float smallErrorRange = 0.02;
+            float largeErrorRange = 0.04;
+            int smallErrorTimeout = 300;
+            int largeErrorTimeout = 600;
+        };
 
         /**
          * @brief Turn the robot to a specific angle using PID control.
          * 0 Degrees is facing "forward" from the starting orientation.
+         * Positive Degrees is counterclockwise, Negative Degrees is clockwise.
          * 
          * @param targetAngle The target angle to turn to (in degrees).
-         * @param timeout The amount of time in milliseconds that the robot will try to reach the angle before giving up
+         * @param timeout The amount of time in milliseconds that the robot will try to reach the angle before giving up (default 3000 milliseconds).
+         * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
+         * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
+         * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
+         * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
+         * @param smallErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
+         * @param largeErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
          */
-        void virtual turnToAngle(double targetAngle, int timeout) = 0;
+        void virtual turnToAngle(turnToAngleParams params) = 0;
 };

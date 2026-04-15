@@ -9,7 +9,6 @@
 
 class TankChassis : public Chassis {
     private:
-        float minAlignDistance = 5; // This distance is threshold for which angle alignment is disabled in autonomous driving functions
 
         PIDController *alignPID;
     public:
@@ -66,16 +65,27 @@ class TankChassis : public Chassis {
          */
         void tank(int leftY, int rightY);
 
-        /**
+        /** 
          * @brief Move the robot to a specific position using PID control. This method blocks until the target position is reached.
+         * This method will also turn to align itself with the target pose.
          * 
          * @note This method ignores the angle of the target pose and only drives to the x and y coordinates.
          * 
-         * @param targetPose The target pose to move to.
-         * @param timeout The amount of time in milliseconds that the robot will try to reach the pose before giving up (default 5 seconds).
-         * @param maxSpeed The maximum speed the robot can travel, from 0 to 127
+         * @param targetPose The target pose to move to (defaults to the origin).
+         * @param timeout The amount of time in milliseconds that the robot will try to reach the pose before giving up (default 3000 milliseconds).
+         * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
+         * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
+         * @param maxMoveSpeed The maximum speed the robot can travel, from 0 to 127 (defaults to 50)
+         * @param maxMoveAccel The maximum acceleration and decceleration the robot can reach (defaults to 127). 
+         * @param smallMoveErrorRange The range the move error needs to be within for the small error timeout in inches (defaults to 0.5 inches)
+         * @param largeMoveErrorRange The range the move error needs to be within for the large error timeout in inches (defaults to 1.5 inches)
+         * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
+         * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
+         * @param smallTurnErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
+         * @param largeTurnErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
+         * @param minAlignDistance The minimum distance that the robot needs to be from the target pose for the robot to be allowed to turn (default 5 inches).
          */
-        void moveToPose(const Pose& targetPose, int timeout = 5000, int maxSpeed = 50) override;
+        void moveToPose(moveToPoseParams params) override;
 
         /**
          * @brief Drive the robot a specified distance. Positive distance drives forwards,
@@ -87,9 +97,17 @@ class TankChassis : public Chassis {
 
         /**
          * @brief Turn the robot to a specific angle using PID control.
-         * 0 Degrees is facing "forward" from the starting orientation. Counterclockwise is positive
+         * 0 Degrees is facing "forward" from the starting orientation.
+         * Positive Degrees is counterclockwise, Negative Degrees is clockwise.
          * 
          * @param targetAngle The target angle to turn to (in degrees).
+         * @param timeout The amount of time in milliseconds that the robot will try to reach the angle before giving up (default 3000 milliseconds).
+         * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
+         * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
+         * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
+         * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
+         * @param smallErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
+         * @param largeErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
          */
-        void turnToAngle(double targetAngle, int timeout) override;
+        void turnToAngle(turnToAngleParams params) override;
 };
