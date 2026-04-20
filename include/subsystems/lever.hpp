@@ -2,6 +2,8 @@
 
 #include "main.h"
 
+inline int leverSpeed = 127;
+
 enum LeverState {
     IDLE,
     INTAKING,
@@ -14,6 +16,9 @@ void leverInitialize();
 
 // Sets the current lever state
 void setLeverState(LeverState state);
+
+// Gets the current lever state
+LeverState getLeverState();
 
 // Polls the controller and determines lever motor, lift pistion, and wing piston states
 void leverPeriodic();

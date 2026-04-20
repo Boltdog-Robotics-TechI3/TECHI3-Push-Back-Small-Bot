@@ -5,8 +5,6 @@ LeverState leverState = LeverState::IDLE;
 std::atomic<bool> isLeverSettled = false;
 std::atomic<bool> isInterrupted = false;
 
-int leverSpeed = 127;
-
 pros::Task leverTask = pros::Task([]() {
     while(1) {
         switch (leverState) {
@@ -50,6 +48,10 @@ void leverInitialize() {
 
 void setLeverState(LeverState state) {
     leverState = state;
+}
+
+LeverState getLeverState() {
+    return leverState;
 }
 
 void setIntakeSpeed(int speed) {
