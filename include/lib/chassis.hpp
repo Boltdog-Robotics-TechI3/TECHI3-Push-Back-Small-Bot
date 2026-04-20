@@ -16,6 +16,13 @@ class Chassis {
         PIDController *movePID;
         PIDController *turnPID;
 
+        Timer *timeoutTimer;
+        Timer *smallErrorTimer;
+        Timer *largeErrorTimer;
+        Timer *failsafeTimer;
+
+        Timer *enableTurningTimer;
+
         bool tracking = false;
 
         /**

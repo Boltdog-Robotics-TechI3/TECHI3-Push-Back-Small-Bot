@@ -55,6 +55,13 @@ void TankChassis::moveToPose(moveToPoseParams params) {
     if (!movePID || !alignPID) {
         return;
     }
+    if (timeoutTimer == nullptr) {
+        timeoutTimer = new Timer(params.timeout, +[]() { Chassis::isAtSetpoint = true; }); 
+        smallErrorTimer = new Timer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+        largeErrorTimer = new Timer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+        failsafeTimer = new Timer(100, +[]() { Chassis::isAtSetpoint = true; });
+        enableTurningTimer = new Timer(params.turnStartTime, +[]() { Chassis::enableTurning = true; });
+    }
 
     isAtSetpoint = false;
     enableTurning = false;
@@ -76,6 +83,11 @@ void TankChassis::moveToPose(moveToPoseParams params) {
     int linearOutput = 0;
     int angularOutput = 0;
 
+    timeoutTimer->setTime(params.timeout);
+    smallErrorTimer->setTime(params.smallErrorTimeout);
+    largeErrorTimer->setTime(params.largeErrorTimeout);
+    enableTurningTimer->setTime(params.turnStartTime);
+
     movePID->reset();
     alignPID->reset();
 
@@ -88,23 +100,16 @@ void TankChassis::moveToPose(moveToPoseParams params) {
     alignPID->setOutputLimits(-params.maxTurnSpeed, params.maxTurnSpeed);
     alignPID->setSlewRate(params.maxTurnAccel);
 
-    Timer timeoutTimer(params.timeout, +[]() { Chassis::isAtSetpoint = true; });
-    Timer smallErrorTimer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
-    Timer largeErrorTimer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
-    Timer failsafeTimer(100, +[]() { Chassis::isAtSetpoint = true; });
-
-    Timer enableTurningTimer(params.turnStartTime, +[]() { Chassis::enableTurning = true; });
-    
-    timeoutTimer.start();
-    enableTurningTimer.start();
+    timeoutTimer->start();
+    enableTurningTimer->start();
     while (!isAtSetpoint) {
         error = pose->distanceTo(params.targetPose);
 
-        if (fabs(movePID->getPreviousError()) < fabs(error)) {
-            failsafeTimer.start();
+        if (fabs(movePID->getPreviousError()) < fabs(error) && error < params.minAlignDistance) {
+            failsafeTimer->start();
         }
         else {
-            failsafeTimer.stop();
+            failsafeTimer->stop();
         }
         // std::cout << "error: " << error << "; previous error: " << movePID->getPreviousError() << "; small error: " << movePID->isInSmallErrorRange() << "; large error: " << movePID->isInLargeErrorRange() << std::endl;
 
@@ -129,24 +134,24 @@ void TankChassis::moveToPose(moveToPoseParams params) {
         }
 
         if (movePID->isInSmallErrorRange()) {
-            smallErrorTimer.start();    
+            smallErrorTimer->start();    
         } else {
-            smallErrorTimer.stop();
+            smallErrorTimer->stop();
         }
         if (movePID->isInLargeErrorRange()) {
-            largeErrorTimer.start();
+            largeErrorTimer->start();
         } else {
-            largeErrorTimer.stop();
+            largeErrorTimer->stop();
         }  
         
 		pros::delay(20);
     }
 
-    smallErrorTimer.stop();
-    largeErrorTimer.stop();
-    timeoutTimer.stop();
-    failsafeTimer.stop();
-    enableTurningTimer.stop();
+    smallErrorTimer->stop();
+    largeErrorTimer->stop();
+    timeoutTimer->stop();
+    failsafeTimer->stop();
+    enableTurningTimer->stop();
     stop();
 }
 
@@ -157,17 +162,13 @@ void TankChassis::moveToPose(moveToPoseParams params) {
  * @param distance the distance to drive in inches.
  */
 void TankChassis::moveDistance(double distance, int timeout) {
-    if (!movePID || !alignPID) {
+    if (!movePID || !alignPID || true) {
         return;
     }
 
     isAtSetpoint = false;
 
-    Timer timeoutTimer(timeout, +[]() { Chassis::isAtSetpoint = true; });
-    Timer smallErrorTimer(500, +[]() { Chassis::isAtSetpoint = true; });
-    Timer largeErrorTimer(2000, +[]() { Chassis::isAtSetpoint = true; });
-
-    timeoutTimer.start();
+    timeoutTimer->start();
     double initialPosition = odometry ? odometry->getReadings()[0] : (drivetrain->getMotors()[0]->get_position() + drivetrain->getMotors()[1]->get_position()) / 2.0;
     
     movePID->reset();
@@ -184,15 +185,15 @@ void TankChassis::moveDistance(double distance, int timeout) {
         double currentPosition = odometry ? odometry->getReadings()[0] : (drivetrain->getMotors()[0]->get_position() + drivetrain->getMotors()[1]->get_position()) / 2.0;
 
         if (movePID->isInSmallErrorRange()) {
-            smallErrorTimer.start();
+            smallErrorTimer->start();
         }
         else if (movePID->isInLargeErrorRange()) {
-            smallErrorTimer.stop();
-            largeErrorTimer.start();
+            smallErrorTimer->stop();
+            largeErrorTimer->start();
         }
         else {
-            smallErrorTimer.stop();
-            largeErrorTimer.stop();
+            smallErrorTimer->stop();
+            largeErrorTimer->stop();
         }
 
         int output = movePID->calculate(currentPosition-initialPosition, distance);
@@ -202,9 +203,9 @@ void TankChassis::moveDistance(double distance, int timeout) {
         pros::delay(20);
     }
 
-    timeoutTimer.stop();
-    smallErrorTimer.stop();
-    largeErrorTimer.stop();
+    timeoutTimer->stop();
+    smallErrorTimer->stop();
+    largeErrorTimer->stop();
     stop();
 }
 
@@ -226,14 +227,21 @@ void TankChassis::turnToAngle(turnToAngleParams params) {
     if (!turnPID) {
         return;
     }
+    if (timeoutTimer == nullptr) {
+        timeoutTimer = new Timer(params.timeout, +[]() { Chassis::isAtSetpoint = true; }); 
+        smallErrorTimer = new Timer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+        largeErrorTimer = new Timer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+        failsafeTimer = new Timer(100, +[]() { Chassis::isAtSetpoint = true; });
+        enableTurningTimer = new Timer(0, +[]() { Chassis::enableTurning = true; });
+    }
 
     isAtSetpoint = false;
 
     float targetAngle = Pose::degToRad(params.targetAngle);
 
-    Timer timeoutTimer(params.timeout, +[]() { Chassis::isAtSetpoint = true; }); 
-    Timer smallErrorTimer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
-    Timer largeErrorTimer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+    timeoutTimer->setTime(params.timeout);
+    smallErrorTimer->setTime(params.smallErrorTimeout);
+    largeErrorTimer->setTime(params.largeErrorTimeout);
 
     turnPID->reset();
     turnPID->setOutputLimits(-params.maxTurnSpeed, params.maxTurnSpeed);
@@ -242,7 +250,7 @@ void TankChassis::turnToAngle(turnToAngleParams params) {
     turnPID->setSlewRate(params.maxTurnAccel);
     turnPID->setIZone(0.1);
 
-    timeoutTimer.start();
+    timeoutTimer->start();
 
     while (!isAtSetpoint) {
         double error = targetAngle - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
@@ -257,21 +265,21 @@ void TankChassis::turnToAngle(turnToAngleParams params) {
         drivetrain->setMotorSpeeds({-output, output});
 
         if (turnPID->isInSmallErrorRange()) {
-            smallErrorTimer.start();
+            smallErrorTimer->start();
         }
         else if (turnPID->isInLargeErrorRange()) {
-            smallErrorTimer.stop();
-            largeErrorTimer.start();
+            smallErrorTimer->stop();
+            largeErrorTimer->start();
         }
         else {
-            smallErrorTimer.stop();
-            largeErrorTimer.stop();
+            smallErrorTimer->stop();
+            largeErrorTimer->stop();
         }
 
         pros::delay(20);
     }
-    smallErrorTimer.stop();
-    largeErrorTimer.stop();
-    timeoutTimer.stop();
+    smallErrorTimer->stop();
+    largeErrorTimer->stop();
+    timeoutTimer->stop();
     stop();
 }

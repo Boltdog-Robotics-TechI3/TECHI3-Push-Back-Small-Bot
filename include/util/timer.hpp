@@ -32,4 +32,6 @@ class Timer {
         void start();
         void stop();
         bool isRunning() { return running; }
+        void setTime(int t) { time = t; }
+        int getTime() { return time; }
 };

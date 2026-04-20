@@ -100,6 +100,13 @@ void XChassis::moveToPose(moveToPoseParams params) {
     if (!movePID | !turnPID) {
         return;
     }
+    if (timeoutTimer == nullptr) {
+        timeoutTimer = new Timer(params.timeout, +[]() { Chassis::isAtSetpoint = true; }); 
+        smallErrorTimer = new Timer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+        largeErrorTimer = new Timer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+        failsafeTimer = new Timer(100, +[]() { Chassis::isAtSetpoint = true; });
+        enableTurningTimer = new Timer(params.turnStartTime, +[]() { Chassis::enableTurning = true; });
+    }
 
     isAtSetpoint = false;
     enableTurning = false;
@@ -111,11 +118,10 @@ void XChassis::moveToPose(moveToPoseParams params) {
     float targetAngle = Pose::degToRad(params.targetPose.getTheta());
     float drivingAngle = 0;
     
-    Timer timeoutTimer(params.timeout, +[]() { Chassis::isAtSetpoint = true; }); 
-    Timer smallErrorTimer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
-    Timer largeErrorTimer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
-
-    Timer enableTurningTimer(params.turnStartTime, +[]() { Chassis::enableTurning = true; });
+    timeoutTimer->setTime(params.timeout);
+    smallErrorTimer->setTime(params.smallErrorTimeout);
+    largeErrorTimer->setTime(params.largeErrorTimeout);
+    enableTurningTimer->setTime(params.turnStartTime);
 
     movePID->reset();
     turnPID->reset();
@@ -132,8 +138,8 @@ void XChassis::moveToPose(moveToPoseParams params) {
     turnPID->setSlewRate(params.maxTurnAccel);
     turnPID->setIZone(0.1);
 
-    timeoutTimer.start();
-    enableTurningTimer.start();
+    timeoutTimer->start();
+    enableTurningTimer->start();
 
     while (!isAtSetpoint) {
         moveError = pose->distanceTo(params.targetPose);
@@ -161,24 +167,24 @@ void XChassis::moveToPose(moveToPoseParams params) {
         // std::cout << "error: " << moveError << "; previous error: " << movePID->getPreviousError() << "; small error: " << movePID->isInSmallErrorRange() << "; driving angl: " << drivingAngle << "; large error: " << movePID->isInLargeErrorRange() << std::endl;
 
         if (movePID->isInSmallErrorRange() && turnPID->isInSmallErrorRange()) {
-            smallErrorTimer.start();
+            smallErrorTimer->start();
         }
         else if (movePID->isInLargeErrorRange() && turnPID->isInLargeErrorRange()) {
-            smallErrorTimer.stop();
-            largeErrorTimer.start();
+            smallErrorTimer->stop();
+            largeErrorTimer->start();
         }
         else {
-            smallErrorTimer.stop();
-            largeErrorTimer.stop();
+            smallErrorTimer->stop();
+            largeErrorTimer->stop();
         }
 
         pros::delay(10);
     }
 
-    smallErrorTimer.stop();
-    largeErrorTimer.stop();
-    timeoutTimer.stop();
-    enableTurningTimer.stop();
+    smallErrorTimer->stop();
+    largeErrorTimer->stop();
+    timeoutTimer->stop();
+    enableTurningTimer->stop();
     stop();
 }
 
@@ -200,23 +206,29 @@ void XChassis::turnToAngle(turnToAngleParams params) {
     if (!turnPID) {
         return;
     }
+    if (timeoutTimer == nullptr) {
+        timeoutTimer = new Timer(params.timeout, +[]() { Chassis::isAtSetpoint = true; }); 
+        smallErrorTimer = new Timer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+        largeErrorTimer = new Timer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+        failsafeTimer = new Timer(100, +[]() { Chassis::isAtSetpoint = true; });
+        enableTurningTimer = new Timer(0, +[]() { Chassis::enableTurning = true; });
+    }
 
     isAtSetpoint = false;
 
     float targetAngle = Pose::degToRad(params.targetAngle);
 
-    Timer timeoutTimer(params.timeout, +[]() { Chassis::isAtSetpoint = true; }); 
-    Timer smallErrorTimer(Pose::degToRad(params.smallErrorTimeout), +[]() { Chassis::isAtSetpoint = true; });
-    Timer largeErrorTimer(Pose::degToRad(params.largeErrorTimeout), +[]() { Chassis::isAtSetpoint = true; });
+    timeoutTimer->setTime(params.timeout);
+    smallErrorTimer->setTime(params.smallErrorTimeout);
+    largeErrorTimer->setTime(params.largeErrorTimeout);
 
     turnPID->reset();
     turnPID->setOutputLimits(-params.maxTurnSpeed, params.maxTurnSpeed);
-    turnPID->setSmallErrorRange(params.smallErrorRange);
-    turnPID->setLargeErrorRange(params.largeErrorRange);
+    turnPID->setSmallErrorRange(Pose::degToRad(params.smallErrorRange));
+    turnPID->setLargeErrorRange(Pose::degToRad(params.largeErrorRange));
     turnPID->setSlewRate(params.maxTurnAccel);
 
-    timeoutTimer.start();
-
+    timeoutTimer->start();
     while (!isAtSetpoint) {
         double error = targetAngle - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
         if (error > M_PI) {
@@ -230,21 +242,21 @@ void XChassis::turnToAngle(turnToAngleParams params) {
         driveAngle(0, 0, output);
 
         if (turnPID->isInSmallErrorRange()) {
-            smallErrorTimer.start();
+            smallErrorTimer->start();
         }
         else if (turnPID->isInLargeErrorRange()) {
-            smallErrorTimer.stop();
-            largeErrorTimer.start();
+            smallErrorTimer->stop();
+            largeErrorTimer->start();
         }
         else {
-            smallErrorTimer.stop();
-            largeErrorTimer.stop();
+            smallErrorTimer->stop();
+            largeErrorTimer->stop();
         }
 
         pros::delay(20);
     }
-    smallErrorTimer.stop();
-    largeErrorTimer.stop();
-    timeoutTimer.stop();
+    smallErrorTimer->stop();
+    largeErrorTimer->stop();
+    timeoutTimer->stop();
     drivetrain->setMotorSpeeds({0, 0, 0, 0});
 }
