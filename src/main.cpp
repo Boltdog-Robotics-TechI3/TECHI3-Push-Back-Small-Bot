@@ -46,11 +46,11 @@ void autonomous() {
 	chassis.startTracking();
 	chassis.setPose(14, 48, 0); // starting point
 	setLeverState(LeverState::INTAKING);
-	hoodPiston.extend(); // open hood
+	hoodPiston.retract(); // open hood
 	chassis.moveToPose({.targetPose={45, 7, 0}, .timeout= 5000, .maxMoveSpeed=80}); // pick up 2 blocks under long goal
 	//setLeverState(LeverState::IDLE);
-	chassis.moveToPose({.targetPose={11, 11, 0}, .timeout=2000, .maxMoveSpeed=80}); // go to mid score
-	chassis.turnToAngle({.targetAngle=130,.timeout=1000}); // line up with mid goal
+	chassis.moveToPose({.targetPose={11, 11, 0}, .timeout=10000, .maxMoveSpeed=80}); // go to mid score
+	chassis.turnToAngle({.targetAngle=130,.timeout=2000}); // line up with mid goal
 	leverSpeed = 70;
 	setLeverState(LeverState::SCORING);
 	pros::delay(800);
