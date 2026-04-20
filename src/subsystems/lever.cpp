@@ -5,14 +5,14 @@ LeverState leverState = LeverState::IDLE;
 std::atomic<bool> isLeverSettled = false;
 std::atomic<bool> isInterrupted = false;
 
-int maxSpeed = 127;
+int leverSpeed = 127;
 
 pros::Task leverTask = pros::Task([]() {
     while(1) {
         switch (leverState) {
             case IDLE:
 				isInterrupted = false;
-                setIntakeSpeed(20);
+                setIntakeSpeed(30);
 				if (leverMotor.get_position() > 0) {
 					setLeverSpeed(-30);
 				} else {
@@ -23,13 +23,18 @@ pros::Task leverTask = pros::Task([]() {
                 setIntakeSpeed(127);
                 break;
             case OUTTAKING:
-                setIntakeSpeed(-80);
+                setIntakeSpeed(-127);
                 break;
             case SCORING:
                 setIntakeSpeed(127);
-                setLeverPosition(200, maxSpeed, 400);
+                setLeverSpeed(leverSpeed);
+                pros::delay(200);
+                while (leverMotor.get_actual_velocity() > 10);
+                pros::delay(500);
+                setLeverSpeed(-80);
                 setIntakeSpeed(-30);
-                setLeverPosition(0, 100, 100);
+                pros::delay(200);
+                while (leverMotor.get_actual_velocity() > 10);
                 setLeverState(LeverState::IDLE);
                 break;
         }
@@ -68,12 +73,10 @@ void leverPeriodic() {
         if (leverState == LeverState::SCORING) {
             isInterrupted = true;
         }
-        else if (hoodPiston.is_extended()) {
-            maxSpeed = 127;
-            setLeverState(LeverState::SCORING);
-        }
         else {
+            leverSpeed = 127;
             hoodPiston.extend();
+            setLeverState(LeverState::SCORING);
         }
     } 
     else if (controller.get_digital_new_press(DIGITAL_R1)) {
@@ -81,7 +84,7 @@ void leverPeriodic() {
 			isInterrupted = true;
 		}
         else if (hoodPiston.is_extended()) {
-            maxSpeed = 90;
+            leverSpeed = 100;
             setLeverState(LeverState::SCORING);
         }
         else {
@@ -93,7 +96,7 @@ void leverPeriodic() {
 			isInterrupted = true;
 		}
         else if (hoodPiston.is_extended()) {
-            maxSpeed = 50;
+            leverSpeed = 60;
             setLeverState(LeverState::SCORING);
         }
         else {
@@ -106,9 +109,11 @@ void leverPeriodic() {
 
     if (controller.get_digital_new_press(DIGITAL_UP)) {
         liftPiston.extend();
+        hoodPiston.extend();
     }
     else if (controller.get_digital_new_press(DIGITAL_DOWN)) {
         liftPiston.retract();
+        hoodPiston.retract();
     }
 
     if (controller.get_digital_new_press(DIGITAL_L2)) {
