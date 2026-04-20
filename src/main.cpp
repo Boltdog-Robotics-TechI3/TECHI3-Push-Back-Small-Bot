@@ -43,64 +43,60 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-
-	// //chassis.startTracking();
-	// // chassis.setPose(0, 0, 0);
-	// //chassis.moveToPose({20, 20, 0}, 5000000, 80);
+	chassis.startTracking();
+	chassis.setPose(14, 48, 0); // starting point
+	setLeverState(LeverState::INTAKING);
+	hoodPiston.extend(); // open hood
+	chassis.moveToPose({.targetPose={45, 7, 0}, .timeout= 5000, .maxMoveSpeed=80}); // pick up 2 blocks under long goal
+	//setLeverState(LeverState::IDLE);
+	chassis.moveToPose({.targetPose={11, 11, 0}, .timeout=1000, .maxMoveSpeed=80}); // go to mid score
+	chassis.turnToAngle({.targetAngle=130,.timeout=1000}); // line up with mid goal
+	setLeverPosition(200, 100, 100); // get rid of blocks
+	setLeverPosition(0, 100, 100); // reset lever
+	hoodPiston.retract();
+	//setLeverState(LeverState::OUTTAKING);
+	setLeverState(LeverState::INTAKING);
+	chassis.moveToPose({.targetPose={49, 48, 0}, .timeout=1000, .maxMoveAccel=80}); // line up with match load
+	chassis.turnToAngle({.targetAngle=180,.timeout=1000}); // face match load
+	matchLoadPiston.extend(); // lower match load
+	liftPiston.extend(); // raise lift
+	hoodPiston.retract(); // close hood
+	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=400, .maxMoveAccel=80}); // ram to match load
+	chassis.moveToPose({.targetPose={48.5, 55, 0}, .timeout=400, .maxMoveAccel=80}); // back up
+	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=400, .maxMoveAccel=80}); // ram to match load
+	chassis.moveToPose({.targetPose={48.5, 15, 0}, .timeout=2000, .maxMoveAccel=80}); // ram to match load
+	hoodPiston.extend(); // open hood
+	setLeverPosition(200,127,1000); // score high
+	setLeverPosition(0,100,100); // reset lever
+	// chassis.setPose(48.5, 15, M_PI_2); // reset position
 	// chassis.startTracking();
-	// chassis.setPose(14, 48, 0); // starting point
-	// setLeverState(LeverState::INTAKING);
-	// hoodPiston.extend(); // open hood
-	// chassis.moveToPose({45, 7, 0}, 5000000, 80); // pick up 2 blocks under long goal
-	// //setLeverState(LeverState::IDLE);
-	// chassis.moveToPose({11, 11, 0}, 2000, 80); // go to mid score
-	// chassis.turnToAngle(130,2000); // line up with mid goal
-	// setLeverPosition(200, 100, 100); // get rid of blocks
-	// setLeverPosition(0, 100, 100); // reset lever
-	// hoodPiston.retract();
-	// //setLeverState(LeverState::OUTTAKING);
-	// setLeverState(LeverState::INTAKING);
-	// chassis.moveToPose({49, 48, 0}, 5000, 80); // line up with match load
-	// chassis.turnToAngle(180,5000); // face match load
-	// matchLoadPiston.extend(); // lower match load
-	// liftPiston.extend(); // raise lift
-	// hoodPiston.retract(); // close hood
-	// chassis.moveToPose({48.5, 60, 0}, 400, 80); // ram to match load
-	// chassis.moveToPose({48.5, 55, 0}, 400, 80); // back up
-	// chassis.moveToPose({48.5, 60, 0}, 400, 80); // ram to match load
-	// chassis.moveToPose({48.5, 15, 0}, 2000, 80); // go to long goal
-	// hoodPiston.extend(); // open hood
-	// setLeverPosition(200,127,1000); // score high
-	// setLeverPosition(0,100,100); // reset lever
-	// // chassis.setPose(48.5, 15, M_PI_2); // reset position
-	// // chassis.startTracking();
-	// //chassis.moveToPose({49, 48, 0}, 5000, 80); // line up with match load
-	// liftPiston.extend(); // raise lift
-	// hoodPiston.retract(); // close hood
-	// chassis.moveToPose({48.5, 60, 0}, 400, 80); // ram to match load
-	// chassis.moveToPose({48.5, 55, 0}, 400, 80); // back up
-	// chassis.moveToPose({48.5, 60, 0}, 400, 80); // ram to match load
-	// liftPiston.retract();
-	// hoodPiston.extend(); // open hood
-	// setIntakeSpeed(0);
-	// setLeverState((LeverState)7);
-	// setLeverPosition(200,127,1000); // lever out blocks
-	// setLeverPosition(0,100,100); // reset lever
-	// hoodPiston.retract(); // close hood
-	// liftPiston.extend(); // raise lift
-	// setLeverState(LeverState::INTAKING);
-	// chassis.moveToPose({48.5, 60, 0}, 800, 80); // ram to match load
-	// chassis.moveToPose({48.5, 55, 0}, 800, 80); // back up
-	// chassis.moveToPose({48.5, 60, 0}, 800, 80); // ram to match load
-	// chassis.moveToPose({48.5, 15, 0}, 2000, 80); // go to long goal
-	// hoodPiston.extend(); // open hood
-	// setLeverPosition(200,127,1000); // score high
-	// setLeverPosition(0,100,100); // reset lever
-	// chassis.moveToPose({34, 38, 0}, 500, 80);
-	// chassis.turnToAngle(180,5000);
-	// hoodPiston.retract();
-	// chassis.moveToPose({34, 9, 0}, 1000, 80);
-	// controller.set_text(0, 0, chassis.getPose().to_string());
+	//chassis.moveToPose({49, 48, 0}, 5000, 80); // line up with match load
+	liftPiston.extend(); // raise lift
+	hoodPiston.retract(); // close hood
+	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=400, .maxMoveAccel=80}); // ram to match load
+	chassis.moveToPose({.targetPose={48.5, 55, 0}, .timeout=400, .maxMoveAccel=80}); // back up
+	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=400, .maxMoveAccel=80}); // ram to match load
+	liftPiston.retract();
+	hoodPiston.extend(); // open hood
+	setIntakeSpeed(0);
+	setLeverState((LeverState)7);
+	setLeverPosition(200,127,1000); // lever out blocks
+	setLeverPosition(0,100,100); // reset lever
+	hoodPiston.retract(); // close hood
+	liftPiston.extend(); // raise lift
+	setLeverState(LeverState::INTAKING);
+	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=800, .maxMoveAccel=80}); // ram to match load
+	chassis.moveToPose({.targetPose={48.5, 55, 0}, .timeout=800, .maxMoveAccel=80}); // back up
+	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=800, .maxMoveAccel=80}); // ram to match load
+	chassis.moveToPose({.targetPose={48.5, 15, 0}, .timeout=2000, .maxMoveAccel=80}); // ram to match load
+	hoodPiston.extend(); // open hood
+	setLeverPosition(200,127,1000); // score high
+	setLeverPosition(0,100,100); // reset lever
+	chassis.moveToPose({.targetPose={34, 38, 0}, .timeout=500, .maxMoveSpeed=80});
+	chassis.turnToAngle({.targetAngle=180,.timeout=5000});
+	hoodPiston.retract();
+	chassis.moveToPose({.targetPose={34, 9, 0}, .timeout=1000, .maxMoveAccel=80});
+	controller.set_text(0, 0, chassis.getPose().to_string());
 }
 
 /**
