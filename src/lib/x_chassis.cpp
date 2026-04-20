@@ -87,21 +87,22 @@ void XChassis::fieldCentricHeadingDrive(int leftX, int leftY, int rightX, int ri
  * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
  * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
  * @param maxMoveSpeed The maximum speed the robot can travel, from 0 to 127 (defaults to 50)
- * @param maxMoveAccel The maximum acceleration and decceleration the robot can reach (defaults to 127). 
- * @param smallMoveErrorRange The range the move error needs to be within for the small error timeout in inches (defaults to 0.5 inches)
- * @param largeMoveErrorRange The range the move error needs to be within for the large error timeout in inches (defaults to 1.5 inches)
- * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
- * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
- * @param smallTurnErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
- * @param largeTurnErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
+ * @param maxMoveAccel The maximum acceleration and decceleration the robot can reach (defaults to 0, aka no limit). 
+ * @param smallMoveErrorRange The range the move error needs to be within for the small error timeout in inches (defaults to 1.5 inches)
+ * @param largeMoveErrorRange The range the move error needs to be within for the large error timeout in inches (defaults to 2.5 inches)
+ * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 30)
+ * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 0, aka no limit). 
+ * @param smallTurnErrorRange The range the turn error needs to be within for the small error timeout in degrees (defaults to 1 degree)
+ * @param largeTurnErrorRange The range the turn error needs to be within for the large error timeout in degrees (defaults to 2 degrees)
+ * @param turnStartTime The amount of time elapsed since the start of the movement where, once reached, the robot is allowed to begin turning (defaults to 0 milliseconds, meaning it can start turning instantly).
  */
-#warning TODO: write and test x-drive moveToPose
 void XChassis::moveToPose(moveToPoseParams params) {
     if (!movePID | !turnPID) {
         return;
     }
 
     isAtSetpoint = false;
+    enableTurning = false;
 
     float moveError = 0;
     float turnError = 0;
@@ -114,6 +115,8 @@ void XChassis::moveToPose(moveToPoseParams params) {
     Timer smallErrorTimer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
     Timer largeErrorTimer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
 
+    Timer enableTurningTimer(params.turnStartTime, +[]() { Chassis::enableTurning = true; });
+
     movePID->reset();
     turnPID->reset();
 
@@ -121,34 +124,41 @@ void XChassis::moveToPose(moveToPoseParams params) {
     movePID->setSmallErrorRange(params.smallMoveErrorRange);
     movePID->setLargeErrorRange(params.largeMoveErrorRange);
     movePID->setSlewRate(params.maxMoveAccel);
+    movePID->setIZone(5);
 
     turnPID->setOutputLimits(-params.maxTurnSpeed, params.maxTurnSpeed);
     turnPID->setSmallErrorRange(params.smallTurnErrorRange);
     turnPID->setLargeErrorRange(params.largeTurnErrorRange);
     turnPID->setSlewRate(params.maxTurnAccel);
+    turnPID->setIZone(0.1);
 
     timeoutTimer.start();
+    enableTurningTimer.start();
 
     while (!isAtSetpoint) {
         moveError = pose->distanceTo(params.targetPose);
         moveOutput = movePID->calculate(0, moveError);
 
-        turnError = targetAngle - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
-        if (turnError > M_PI) {
-            turnError = turnError - 2*M_PI;
-        } 
-        else if (turnError < -M_PI) {
-            turnError = 2*M_PI + turnError;
-        }
-
-        turnOutput = turnPID->calculate(turnError, 0);
-
         drivingAngle = pose->angleTo(params.targetPose);
 
-        std::cout << "Move: " << moveError << "; Turn: " << turnError << "; Angle: " << drivingAngle << std::endl;
-        std::cout << "Move Out: " << moveOutput << "; Turn Out: " << turnOutput << std::endl;
+        if (enableTurning) {
+            turnError = targetAngle - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
+            if (turnError > M_PI) {
+                turnError = turnError - 2*M_PI;
+            } 
+            else if (turnError < -M_PI) {
+                turnError = 2*M_PI + turnError;
+            }
 
-        driveAngle(drivingAngle, moveOutput, turnOutput);
+            turnOutput = turnPID->calculate(turnError, 0);
+
+            driveAngle(drivingAngle + odometry->getRotationRadians(), moveOutput, turnOutput);
+        }
+        else {
+            driveAngle(drivingAngle + odometry->getRotationRadians(), moveOutput, 0);
+        }
+
+        // std::cout << "error: " << moveError << "; previous error: " << movePID->getPreviousError() << "; small error: " << movePID->isInSmallErrorRange() << "; driving angl: " << drivingAngle << "; large error: " << movePID->isInLargeErrorRange() << std::endl;
 
         if (movePID->isInSmallErrorRange() && turnPID->isInSmallErrorRange()) {
             smallErrorTimer.start();
@@ -168,6 +178,7 @@ void XChassis::moveToPose(moveToPoseParams params) {
     smallErrorTimer.stop();
     largeErrorTimer.stop();
     timeoutTimer.stop();
+    enableTurningTimer.stop();
     stop();
 }
 
@@ -177,13 +188,13 @@ void XChassis::moveToPose(moveToPoseParams params) {
  * Positive Degrees is counterclockwise, Negative Degrees is clockwise.
  * 
  * @param targetAngle The target angle to turn to (in degrees).
- * @param timeout The amount of time in milliseconds that the robot will try to reach the angle before giving up (default 3000 milliseconds).
+ * @param timeout The amount of time in milliseconds that the robot will try to reach the angle before giving up (default 1500 milliseconds).
+ * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
+ * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 0, aka no limit). 
+ * @param smallErrorRange The range the turn error needs to be within for the small error timeout in degrees (defaults to 1 degree)
+ * @param largeErrorRange The range the turn error needs to be within for the large error timeout in degrees (defaults to 2 degrees)
  * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
  * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
- * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
- * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
- * @param smallErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
- * @param largeErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
  */
 void XChassis::turnToAngle(turnToAngleParams params) {
     if (!turnPID) {
@@ -192,9 +203,11 @@ void XChassis::turnToAngle(turnToAngleParams params) {
 
     isAtSetpoint = false;
 
+    float targetAngle = Pose::degToRad(params.targetAngle);
+
     Timer timeoutTimer(params.timeout, +[]() { Chassis::isAtSetpoint = true; }); 
-    Timer smallErrorTimer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
-    Timer largeErrorTimer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
+    Timer smallErrorTimer(Pose::degToRad(params.smallErrorTimeout), +[]() { Chassis::isAtSetpoint = true; });
+    Timer largeErrorTimer(Pose::degToRad(params.largeErrorTimeout), +[]() { Chassis::isAtSetpoint = true; });
 
     turnPID->reset();
     turnPID->setOutputLimits(-params.maxTurnSpeed, params.maxTurnSpeed);
@@ -205,7 +218,7 @@ void XChassis::turnToAngle(turnToAngleParams params) {
     timeoutTimer.start();
 
     while (!isAtSetpoint) {
-        double error = Pose::degToRad(params.targetAngle) - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
+        double error = targetAngle - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
         if (error > M_PI) {
             error = error - 2*M_PI;
         } 

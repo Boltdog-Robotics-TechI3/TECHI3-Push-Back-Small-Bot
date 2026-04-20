@@ -2,6 +2,7 @@
 #include <cmath>
 
 std::atomic<bool> Chassis::isAtSetpoint = false; 
+std::atomic<bool> Chassis::enableTurning = false; 
 
 /**
  * @brief Scales an input value based on the selected input scaling method.

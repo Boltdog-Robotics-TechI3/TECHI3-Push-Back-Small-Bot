@@ -41,13 +41,14 @@ void TankChassis::tank(int leftY, int rightY) {
  * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
  * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
  * @param maxMoveSpeed The maximum speed the robot can travel, from 0 to 127 (defaults to 50)
- * @param maxMoveAccel The maximum acceleration and decceleration the robot can reach (defaults to 127). 
- * @param smallMoveErrorRange The range the move error needs to be within for the small error timeout in inches (defaults to 0.5 inches)
- * @param largeMoveErrorRange The range the move error needs to be within for the large error timeout in inches (defaults to 1.5 inches)
- * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
- * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
- * @param smallTurnErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
- * @param largeTurnErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
+ * @param maxMoveAccel The maximum acceleration and decceleration the robot can reach (defaults to 0, aka no limit). 
+ * @param smallMoveErrorRange The range the move error needs to be within for the small error timeout in inches (defaults to 1.5 inches)
+ * @param largeMoveErrorRange The range the move error needs to be within for the large error timeout in inches (defaults to 2.5 inches)
+ * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 30)
+ * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 0, aka no limit). 
+ * @param smallTurnErrorRange The range the turn error needs to be within for the small error timeout in degrees (defaults to 1 degree)
+ * @param largeTurnErrorRange The range the turn error needs to be within for the large error timeout in degrees (defaults to 2 degrees)
+ * @param turnStartTime The amount of time elapsed since the start of the movement where, once reached, the robot is allowed to begin turning (defaults to 0 milliseconds, meaning it can start turning instantly).
  * @param minAlignDistance The minimum distance that the robot needs to be from the target pose for the robot to be allowed to turn (default 5 inches).
  */
 void TankChassis::moveToPose(moveToPoseParams params) {
@@ -56,6 +57,7 @@ void TankChassis::moveToPose(moveToPoseParams params) {
     }
 
     isAtSetpoint = false;
+    enableTurning = false;
 
     // Calculate starting angular error to determine if robot should drive forwards or backwards
     float testAngleError = (pose->angleTo(params.targetPose) - M_PI_2) - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
@@ -91,7 +93,10 @@ void TankChassis::moveToPose(moveToPoseParams params) {
     Timer largeErrorTimer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
     Timer failsafeTimer(100, +[]() { Chassis::isAtSetpoint = true; });
 
+    Timer enableTurningTimer(params.turnStartTime, +[]() { Chassis::enableTurning = true; });
+    
     timeoutTimer.start();
+    enableTurningTimer.start();
     while (!isAtSetpoint) {
         error = pose->distanceTo(params.targetPose);
 
@@ -105,7 +110,7 @@ void TankChassis::moveToPose(moveToPoseParams params) {
 
         linearOutput = movePID->calculate(0, error) * (isBackwards ? -1 : 1);
 
-        if (error > params.minAlignDistance) {
+        if (error > params.minAlignDistance && enableTurning) {
             // Calculate and normalize the angle error
             angularError = (pose->angleTo(params.targetPose) + (isBackwards ? M_PI : 0) - M_PI_2) - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
             if (angularError > M_PI) {
@@ -141,6 +146,7 @@ void TankChassis::moveToPose(moveToPoseParams params) {
     largeErrorTimer.stop();
     timeoutTimer.stop();
     failsafeTimer.stop();
+    enableTurningTimer.stop();
     stop();
 }
 
@@ -208,13 +214,13 @@ void TankChassis::moveDistance(double distance, int timeout) {
  * Positive Degrees is counterclockwise, Negative Degrees is clockwise.
  * 
  * @param targetAngle The target angle to turn to (in degrees).
- * @param timeout The amount of time in milliseconds that the robot will try to reach the angle before giving up (default 3000 milliseconds).
+ * @param timeout The amount of time in milliseconds that the robot will try to reach the angle before giving up (default 1500 milliseconds).
+ * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
+ * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 0, aka no limit). 
+ * @param smallErrorRange The range the turn error needs to be within for the small error timeout in degrees (defaults to 1 degree)
+ * @param largeErrorRange The range the turn error needs to be within for the large error timeout in degrees (defaults to 2 degrees)
  * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
  * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
- * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
- * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
- * @param smallErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
- * @param largeErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
  */
 void TankChassis::turnToAngle(turnToAngleParams params) {
     if (!turnPID) {
@@ -223,21 +229,23 @@ void TankChassis::turnToAngle(turnToAngleParams params) {
 
     isAtSetpoint = false;
 
+    float targetAngle = Pose::degToRad(params.targetAngle);
+
     Timer timeoutTimer(params.timeout, +[]() { Chassis::isAtSetpoint = true; }); 
     Timer smallErrorTimer(params.smallErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
     Timer largeErrorTimer(params.largeErrorTimeout, +[]() { Chassis::isAtSetpoint = true; });
 
     turnPID->reset();
     turnPID->setOutputLimits(-params.maxTurnSpeed, params.maxTurnSpeed);
-    turnPID->setSmallErrorRange(params.smallErrorRange);
-    turnPID->setLargeErrorRange(params.largeErrorRange);
+    turnPID->setSmallErrorRange(Pose::degToRad(params.smallErrorRange));
+    turnPID->setLargeErrorRange(Pose::degToRad(params.largeErrorRange));
     turnPID->setSlewRate(params.maxTurnAccel);
     turnPID->setIZone(0.1);
 
     timeoutTimer.start();
 
     while (!isAtSetpoint) {
-        double error = Pose::degToRad(params.targetAngle) - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
+        double error = targetAngle - fmod((pose->getTheta() + 2*M_PI), 2*M_PI);
         if (error > M_PI) {
             error = error - 2*M_PI;
         } 

@@ -90,13 +90,14 @@ class XChassis : public Chassis {
          * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
          * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
          * @param maxMoveSpeed The maximum speed the robot can travel, from 0 to 127 (defaults to 50)
-         * @param maxMoveAccel The maximum acceleration and decceleration the robot can reach (defaults to 127). 
-         * @param smallMoveErrorRange The range the move error needs to be within for the small error timeout in inches (defaults to 0.5 inches)
-         * @param largeMoveErrorRange The range the move error needs to be within for the large error timeout in inches (defaults to 1.5 inches)
-         * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
-         * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
-         * @param smallTurnErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
-         * @param largeTurnErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
+         * @param maxMoveAccel The maximum acceleration and decceleration the robot can reach (defaults to 0, aka no limit). 
+         * @param smallMoveErrorRange The range the move error needs to be within for the small error timeout in inches (defaults to 1.5 inches)
+         * @param largeMoveErrorRange The range the move error needs to be within for the large error timeout in inches (defaults to 2.5 inches)
+         * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 30)
+         * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 0, aka no limit). 
+         * @param smallTurnErrorRange The range the turn error needs to be within for the small error timeout in degrees (defaults to 1 degree)
+         * @param largeTurnErrorRange The range the turn error needs to be within for the large error timeout in degrees (defaults to 2 degrees)
+         * @param turnStartTime The amount of time elapsed since the start of the movement where, once reached, the robot is allowed to begin turning (defaults to 0 milliseconds, meaning it can start turning instantly).
          */
         void moveToPose(moveToPoseParams params) override;
 
@@ -106,13 +107,13 @@ class XChassis : public Chassis {
          * Positive Degrees is counterclockwise, Negative Degrees is clockwise.
          * 
          * @param targetAngle The target angle to turn to (in degrees).
-         * @param timeout The amount of time in milliseconds that the robot will try to reach the angle before giving up (default 3000 milliseconds).
+         * @param timeout The amount of time in milliseconds that the robot will try to reach the angle before giving up (default 1500 milliseconds).
+         * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
+         * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 0, aka no limit). 
+         * @param smallErrorRange The range the turn error needs to be within for the small error timeout in degrees (defaults to 1 degree)
+         * @param largeErrorRange The range the turn error needs to be within for the large error timeout in degrees (defaults to 2 degrees)
          * @param smallErrorTimeout The amount of time in milliseconds that the robot needs to be within the small error range to finish the movement (default 500 milliseconds).
          * @param largeErrorTimeout The amount of time in milliseconds that the robot needs to be within the large error range to finish the movement (default 1000 milliseconds). 
-         * @param maxTurnSpeed The maximum speed the robot can turn, from 0 to 127 (defaults to 50)
-         * @param maxTurnAccel The maximum acceleration and decceleration the robot's turns can reach (defaults to 127). 
-         * @param smallErrorRange The range the turn error needs to be within for the small error timeout in radians (defaults to 0.02 radians)
-         * @param largeErrorRange The range the turn error needs to be within for the large error timeout in radians (defaults to 0.04 radians)
          */
         void turnToAngle(turnToAngleParams params) override;
 };
