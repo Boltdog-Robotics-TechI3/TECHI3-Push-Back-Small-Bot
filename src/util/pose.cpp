@@ -1,4 +1,5 @@
 #include <cmath>
+#include <format>
 #include "util/pose.hpp"
 
 
@@ -68,5 +69,5 @@ Pose Pose::rotate(double angle) {
 }
 
 std::string Pose::to_string() {
-    return "X: " + std::to_string(x) + " Y: " + std::to_string(y) + " Theta (rad): " + std::to_string(theta);
+    return std::format("X:{:.2f} Y:{:.2f} T:{:.2f}", x, y, theta);
 }
