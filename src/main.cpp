@@ -43,63 +43,103 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
+	// Setup
 	chassis.startTracking();
 	chassis.setPose(14, 48, 0); // starting point
+
+	// Grab 2 mid blocks
 	setLeverState(LeverState::INTAKING);
 	hoodPiston.retract(); // open hood
-	chassis.moveToPose({.targetPose={45, 7, 0}, .timeout= 5000, .maxMoveSpeed=80}); // pick up 2 blocks under long goal
-	//setLeverState(LeverState::IDLE);
-	chassis.moveToPose({.targetPose={11, 11, 0}, .timeout=10000, .maxMoveSpeed=80}); // go to mid score
-	chassis.turnToAngle({.targetAngle=130,.timeout=2000}); // line up with mid goal
+	chassis.moveToPose({.targetPose={45, 7, 0}, .timeout=5000, .maxMoveSpeed=80, .maxTurnSpeed=55}); // pick up 2 blocks under long goal
+	
+	// Drive to mid goal
+	chassis.moveToPose({.targetPose={17, 15, 0}, .timeout=2000, .maxMoveSpeed=80}); // go to mid score
+	chassis.turnToAngle({.targetAngle=140, .timeout=2000}); // line up with mid goal
+	hoodPiston.extend(); // open hood
+	pros::delay(200);
+	chassis.moveToPose({.targetPose={10, 10, 0}, .timeout=1000, .maxMoveSpeed=60}); // go to mid score
 	leverSpeed = 70;
 	setLeverState(LeverState::SCORING);
-	pros::delay(800);
+	while (getLeverState()==LeverState::SCORING);
 	hoodPiston.retract();
-	//setLeverState(LeverState::OUTTAKING);
+
+	// Travel to loader.
 	setLeverState(LeverState::INTAKING);
-	chassis.moveToPose({.targetPose={49, 48, 0}, .timeout=2000, .maxMoveAccel=80}); // line up with match load
-	chassis.turnToAngle({.targetAngle=180,.timeout=1000}); // face match load
+	chassis.moveToPose({.targetPose={47, 48, 0}, .timeout=3000, .maxMoveSpeed=80}); // line up with match load
+	chassis.turnToAngle({.targetAngle=185, .timeout=2000, .maxTurnSpeed=50}); // face match load
 	matchLoadPiston.extend(); // lower match load
 	liftPiston.extend(); // raise lift
 	hoodPiston.retract(); // close hood
-	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=400, .maxMoveAccel=80}); // ram to match load
-	chassis.moveToPose({.targetPose={48.5, 55, 0}, .timeout=400, .maxMoveAccel=80}); // back up
-	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=400, .maxMoveAccel=80}); // ram to match load
-	chassis.moveToPose({.targetPose={48.5, 15, 0}, .timeout=2000, .maxMoveAccel=80}); // ram to match load
+	chassis.moveToPose({.targetPose={47, 65, 0}, .timeout=1000, .maxMoveSpeed=50}); // ram to match load
+
+	// Wiggle
+	setLeverState(LeverState::INTAKING);
+	pros::delay(500);
+	chassis.tank(-50, -50);
+	pros::delay(300);
+	chassis.tank(50, 50);
+	pros::delay(150);
+	chassis.tank(-50, -50);
+	pros::delay(500);
+
+	// Long Goal Score 1
+	chassis.moveToPose({.targetPose={47, 24, 0}, .timeout=1500, .maxMoveSpeed=100, .maxTurnSpeed=80}); // ram to match load
 	hoodPiston.extend(); // open hood
 	leverSpeed = 127;
 	setLeverState(LeverState::SCORING);
 	while (getLeverState()==LeverState::SCORING);
+
+	setLeverState(LeverState::INTAKING);
 	// chassis.setPose(48.5, 15, M_PI_2); // reset position
-	// chassis.startTracking();
-	//chassis.moveToPose({49, 48, 0}, 5000, 80); // line up with match load
+
+	// Go back to Loader
+	chassis.moveToPose({.targetPose={47, 65, 0}, .timeout=2000, .maxMoveSpeed=60}); // ram to match load
 	liftPiston.extend(); // raise lift
 	hoodPiston.retract(); // close hood
-	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=400, .maxMoveAccel=80}); // ram to match load
-	chassis.moveToPose({.targetPose={48.5, 55, 0}, .timeout=400, .maxMoveAccel=80}); // back up
-	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=400, .maxMoveAccel=80}); // ram to match load
+	pros::delay(500);
+	chassis.tank(-50, -50);
+	pros::delay(300);
+	chassis.tank(50, 50);
+	pros::delay(150);
+	chassis.tank(-50, -50);
+	pros::delay(500);	
+
+	// Spit out enemy color
 	liftPiston.retract();
 	hoodPiston.extend(); // open hood
 	setIntakeSpeed(0);
-	setLeverState((LeverState)7);
 	leverSpeed = 127;
 	setLeverState(LeverState::SCORING);
 	while (getLeverState()==LeverState::SCORING);
+	setLeverState(LeverState::INTAKING);
+
+	// Go intake match loads
 	hoodPiston.retract(); // close hood
 	liftPiston.extend(); // raise lift
-	setLeverState(LeverState::INTAKING);
-	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=800, .maxMoveAccel=80}); // ram to match load
-	chassis.moveToPose({.targetPose={48.5, 55, 0}, .timeout=800, .maxMoveAccel=80}); // back up
-	chassis.moveToPose({.targetPose={48.5, 60, 0}, .timeout=800, .maxMoveAccel=80}); // ram to match load
-	chassis.moveToPose({.targetPose={48.5, 15, 0}, .timeout=2000, .maxMoveAccel=80}); // ram to match load
+	pros::delay(500);
+	chassis.tank(-50, -50);
+	pros::delay(300);
+	chassis.tank(50, 50);
+	pros::delay(150);
+	chassis.tank(-50, -50);
+	pros::delay(300);
+	chassis.tank(50, 50);
+	pros::delay(150);
+	chassis.tank(-50, -50);
+	pros::delay(500);
+
+	// Long Goal Score 2
+	chassis.moveToPose({.targetPose={47, 24, 0}, .timeout=2000, .maxMoveSpeed=80, .maxTurnSpeed=80}); // ram to match load
 	hoodPiston.extend(); // open hood
 	leverSpeed = 127;
 	setLeverState(LeverState::SCORING);
 	while (getLeverState()==LeverState::SCORING);
-	chassis.moveToPose({.targetPose={34, 38, 0}, .timeout=1500, .maxMoveSpeed=80});
+
+	// Wing it 
+	chassis.moveToPose({.targetPose={0, 36, 0}, .timeout=1500, .maxMoveSpeed=100, .maxTurnSpeed=100});
 	chassis.turnToAngle({.targetAngle=180,.timeout=5000});
 	hoodPiston.retract();
-	chassis.moveToPose({.targetPose={34, 9, 0}, .timeout=1500, .maxMoveAccel=80});
+	chassis.moveToPose({.targetPose={33, 9, 0}, .timeout=1500, .maxMoveSpeed=80});
 	controller.set_text(0, 0, chassis.getPose().to_string());
 }
 
@@ -118,9 +158,10 @@ void autonomous() {
  */
 void opcontrol() {
 	int leftY, rightX;
+	std::cout << "Hello" << std::endl;
 
-	// chassis.setPose(14, 48, 0);
-	// chassis.startTracking();
+	chassis.setPose(0, 0, 0);
+	chassis.startTracking();
 
 	while (true) {
 		leftY = controller.get_analog(ANALOG_LEFT_Y);
@@ -131,7 +172,7 @@ void opcontrol() {
 		leverPeriodic();
 
 		// controller.set_text(0, 0, std::to_string(leverMotor.get_position()));
-//		controller.set_text(0, 0, chassis.getPose().to_string());
+		controller.set_text(0, 0, chassis.getPose().to_string());
 
 		 if(controller.get_digital_new_press(DIGITAL_RIGHT)){
 		 	autonomous();
