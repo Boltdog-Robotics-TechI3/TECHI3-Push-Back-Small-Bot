@@ -153,6 +153,7 @@ void TankChassis::moveToPose(moveToPoseParams params) {
     failsafeTimer->stop();
     enableTurningTimer->stop();
     stop();
+    pros::delay(20);
 }
 
 /**
@@ -248,7 +249,7 @@ void TankChassis::turnToAngle(turnToAngleParams params) {
     turnPID->setSmallErrorRange(Pose::degToRad(params.smallErrorRange));
     turnPID->setLargeErrorRange(Pose::degToRad(params.largeErrorRange));
     turnPID->setSlewRate(params.maxTurnAccel);
-    turnPID->setIZone(0.1);
+    turnPID->setIZone(0.25);
 
     timeoutTimer->start();
 
@@ -282,4 +283,5 @@ void TankChassis::turnToAngle(turnToAngleParams params) {
     largeErrorTimer->stop();
     timeoutTimer->stop();
     stop();
+    pros::delay(20);
 }
