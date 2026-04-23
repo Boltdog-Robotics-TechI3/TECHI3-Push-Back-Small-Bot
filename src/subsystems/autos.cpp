@@ -2,6 +2,7 @@
 #include <math.h>
 
 void goalRush(){
+	turn.setGains(100, .15, .1);
 	chassis.setPose(14,48,M_PI_2);
 	setLeverState(LeverState::INTAKING);
 	chassis.moveToPose({.targetPose = {47.8, 48, 0}, .timeout = 3000, .maxMoveSpeed = 115}); // line up with match load
@@ -13,16 +14,27 @@ void goalRush(){
 
 	// Wiggle
 	setLeverState(LeverState::INTAKING);
-	pros::delay(500);
-	chassis.tank(-50, -50);
-	pros::delay(300);
-	chassis.tank(50, 50);
-	pros::delay(150);
-	chassis.tank(-50, -50);
-	pros::delay(500);
+	for(int i = 0; i < 3; i++){
+		chassis.tank(50, -50);
+		pros::delay(200);
+		chassis.tank(-50, 50);
+		pros::delay(200);
+	}
+	chassis.turnToAngle({.targetAngle = 180, .timeout = 2000, .maxTurnSpeed = 100});		  // face match load
 
 	// Long Goal Score 1
+	setLeverState(LeverState::IDLE);
 	chassis.moveToPose({.targetPose = {48.5, 24, 0}, .timeout = 1500, .maxMoveSpeed = 115, .maxTurnSpeed = 80}); // ram to match load
+	for(int i = 0; i < 3; i++){
+		chassis.tank(-25, 100);
+		pros::delay(100);
+		chassis.tank(100, -25);
+		pros::delay(100);
+	}
+	setLeverState(LeverState::INTAKING);
+	chassis.tank(0, 0);
+
+
 	hoodPiston.extend();																					   // open hood
 	leverSpeed = 100;
 	setLeverState(LeverState::SCORING);
