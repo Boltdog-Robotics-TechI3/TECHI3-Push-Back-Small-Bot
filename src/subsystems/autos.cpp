@@ -4,23 +4,33 @@
 void goalRush(){
 	turn.setGains(100, .15, .1);
 	chassis.setPose(14,48,M_PI_2);
+	chassis.startTracking();
 	setLeverState(LeverState::INTAKING);
 	chassis.moveToPose({.targetPose = {47.8, 48, 0}, .timeout = 3000, .maxMoveSpeed = 115}); // line up with match load
 	matchLoadPiston.extend();															  // lower match load
 	liftPiston.extend();																  // raise lift
 	hoodPiston.retract();																  // close hood
 	chassis.turnToAngle({.targetAngle = 180, .timeout = 2000, .maxTurnSpeed = 100});		  // face match load
-	chassis.moveToPose({.targetPose = {48.5, 65, 0}, .timeout = 1000, .maxMoveSpeed = 50}); // ram to match load
+	chassis.moveToPose({.targetPose = {48.5, 68.5, 0}, .timeout = 1000, .maxMoveSpeed = 50}); // ram to match load
+	chassis.tank(25, 25);
+	pros::delay(375);
+	chassis.tank(0,0);
+	pros::delay(600);
+	chassis.tank(75,75);
+	pros::delay(300);
+	chassis.tank(0,0);
+	matchLoadPiston.retract();															  // raise match load
 
 	// Wiggle
-	setLeverState(LeverState::INTAKING);
-	for(int i = 0; i < 3; i++){
-		chassis.tank(50, -50);
-		pros::delay(200);
-		chassis.tank(-50, 50);
-		pros::delay(200);
-	}
-	chassis.turnToAngle({.targetAngle = 180, .timeout = 2000, .maxTurnSpeed = 100});		  // face match load
+	// setLeverState(LeverState::INTAKING);
+	// for(int i = 0; i < 3; i++){
+	// 	chassis.tank(50, -50);
+	// 	pros::delay(200);
+	// 	chassis.tank(-50, 50);
+	// 	pros::delay(200);
+	// }
+	
+	// chassis.turnToAngle({.targetAngle = (int) Pose::radToDeg(odometry.getRotationRadians() + chassis.getPose().angleTo({48.5, 24, 0})), .timeout = 2000, .maxTurnSpeed = 100});		  // face match load
 
 	// Long Goal Score 1
 	setLeverState(LeverState::IDLE);
@@ -42,7 +52,7 @@ void goalRush(){
 	
 
 	// Wing it
-	chassis.moveToPose({.targetPose = {48.5, 43, 0}, .timeout = 3000, .maxMoveSpeed = 115, .maxTurnSpeed = 100, .turnStartTime = 1000});
+	chassis.moveToPose({.targetPose = {48.5, 42, 0}, .timeout = 3000, .maxMoveSpeed = 115, .maxTurnSpeed = 100, .turnStartTime = 1000});
 	hoodPiston.retract();
 	turn.setI(.2);
 	chassis.turnToAngle({.targetAngle = 145, .timeout = 3000, .maxTurnSpeed = 100});

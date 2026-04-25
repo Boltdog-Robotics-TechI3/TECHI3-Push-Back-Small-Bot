@@ -77,7 +77,7 @@ void opcontrol() {
 		// controller.set_text(0, 0, std::to_string(leverMotor.get_position()));
 		controller.set_text(0, 0, chassis.getPose().to_string());
 
-		 if(controller.get_digital_new_press(DIGITAL_RIGHT)){
+		 if(controller.get_digital_new_press(DIGITAL_RIGHT) && controller.get_digital(DIGITAL_B)){
 		 	autonomous();
 		 }
 
