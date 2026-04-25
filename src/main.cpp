@@ -66,6 +66,8 @@ void opcontrol() {
 	chassis.setPose(0, 0, 0);
 	chassis.startTracking();
 
+	hoodPiston.extend();
+
 	while (true) {
 		leftY = controller.get_analog(ANALOG_LEFT_Y);
 		rightX = controller.get_analog(ANALOG_RIGHT_X) * (1.0/2.0);
