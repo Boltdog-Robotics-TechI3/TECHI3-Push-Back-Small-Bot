@@ -13,12 +13,13 @@ void goalRush(){
 	chassis.turnToAngle({.targetAngle = 180, .timeout = 2000, .maxTurnSpeed = 100});		  // face match load
 	chassis.moveToPose({.targetPose = {48.5, 68.5, 0}, .timeout = 1000, .maxMoveSpeed = 50}); // ram to match load
 	chassis.tank(25, 25);
-	pros::delay(375);
+	pros::delay(350);
 	chassis.tank(0,0);
 	pros::delay(600);
 	chassis.tank(75,75);
 	pros::delay(300);
 	chassis.tank(0,0);
+	
 	matchLoadPiston.retract();															  // raise match load
 
 	// Wiggle
@@ -34,14 +35,15 @@ void goalRush(){
 
 	// Long Goal Score 1
 	setLeverState(LeverState::IDLE);
-	chassis.moveToPose({.targetPose = {48.5, 24, 0}, .timeout = 1500, .maxMoveSpeed = 115, .maxTurnSpeed = 80}); // ram to match load
-	for(int i = 0; i < 3; i++){
-		chassis.tank(-25, 100);
-		pros::delay(100);
-		chassis.tank(100, -25);
-		pros::delay(100);
-	}
+	chassis.moveToPose({.targetPose = {48, 24, 0}, .timeout = 1500, .maxMoveSpeed = 115, .maxTurnSpeed = 80}); // ram to match load
+	// for(int i = 0; i < 3; i++){
+	// 	chassis.tank(-25, 100);
+	// 	pros::delay(100);
+	// 	chassis.tank(100, -25);
+	// 	pros::delay(100);
+	// }
 	setLeverState(LeverState::INTAKING);
+	pros::delay(200);
 	chassis.tank(0, 0);
 
 
@@ -55,7 +57,7 @@ void goalRush(){
 	chassis.moveToPose({.targetPose = {48.5, 42, 0}, .timeout = 3000, .maxMoveSpeed = 115, .maxTurnSpeed = 100, .turnStartTime = 1000});
 	hoodPiston.retract();
 	turn.setI(.2);
-	chassis.turnToAngle({.targetAngle = 145, .timeout = 3000, .maxTurnSpeed = 100});
+	chassis.turnToAngle({.targetAngle = 142, .timeout = 3000, .maxTurnSpeed = 100, .smallErrorRange=1, .largeErrorRange=2});
 	matchLoadPiston.retract();
 	chassis.moveToPose({.targetPose = {37, 5, 0}, .timeout = 1500, .maxMoveSpeed = 100, .turnStartTime = 200});
 	controller.set_text(0, 0, chassis.getPose().to_string());

@@ -111,7 +111,7 @@ void leverPeriodic() {
 
     if (controller.get_digital_new_press(DIGITAL_UP)) {
         liftPiston.extend();
-        hoodPiston.extend();
+        // hoodPiston.extend();
     }
     else if (controller.get_digital_new_press(DIGITAL_DOWN)) {
         liftPiston.retract();
