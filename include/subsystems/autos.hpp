@@ -4,3 +4,4 @@
 
 void AWP();
 void goalRush();
+void highGoal();

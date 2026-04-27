@@ -1,7 +1,6 @@
 #include "main.h"
 #include <math.h>
-
-void goalRush(){
+void highGoal(){
 	turn.setGains(100, .15, .1);
 	chassis.setPose(14,48,M_PI_2);
 	chassis.startTracking();
@@ -12,10 +11,89 @@ void goalRush(){
 	hoodPiston.retract();																  // close hood
 	chassis.turnToAngle({.targetAngle = 180, .timeout = 2000, .maxTurnSpeed = 100});		  // face match load
 	chassis.moveToPose({.targetPose = {48.5, 68.5, 0}, .timeout = 1000, .maxMoveSpeed = 50}); // ram to match load
-	chassis.tank(25, 25);
+	chassis.tank(23, 23);
 	pros::delay(350);
 	chassis.tank(0,0);
 	pros::delay(600);
+	chassis.tank(75,75);
+	pros::delay(300);
+	chassis.tank(0,0);
+	
+	matchLoadPiston.retract();	
+	
+	setLeverState(LeverState::IDLE);
+	chassis.moveToPose({.targetPose = {48.5, 24, 0}, .timeout = 1500, .maxMoveSpeed = 115, .maxTurnSpeed = 80}); // ram to match load
+	// for(int i = 0; i < 3; i++){
+	// 	chassis.tank(-25, 100);
+	// 	pros::delay(100);
+	// 	chassis.tank(100, -25);
+	// 	pros::delay(100);
+	// }
+	setLeverState(LeverState::INTAKING);
+	pros::delay(200);
+	chassis.tank(0, 0);
+
+
+	hoodPiston.extend();																					   // open hood
+	leverSpeed = 100;
+	setLeverState(LeverState::SCORING);
+	while (getLeverState() == LeverState::SCORING);
+
+	//go back to laoder
+	matchLoadPiston.extend();
+	chassis.moveToPose({.targetPose = {48.5, 68.5, 0}, .timeout = 1000, .maxMoveSpeed = 50}); // ram to match load
+	chassis.tank(23, 23);
+	pros::delay(350);
+	chassis.tank(0,0);
+	pros::delay(600);
+
+	hoodPiston.extend();																					   // open hood
+	leverSpeed = 100;
+	setLeverState(LeverState::SCORING);
+	while (getLeverState() == LeverState::SCORING);
+
+	setLeverState(LeverState::INTAKING);
+
+	pros::delay(1200);
+
+	chassis.tank(75,75);
+	pros::delay(300);
+	chassis.tank(0,0);
+
+	setLeverState(LeverState::IDLE);
+	chassis.moveToPose({.targetPose = {48.5, 24, 0}, .timeout = 1500, .maxMoveSpeed = 115, .maxTurnSpeed = 80}); // ram to match load
+	// for(int i = 0; i < 3; i++){
+	// 	chassis.tank(-25, 100);
+	// 	pros::delay(100);
+	// 	chassis.tank(100, -25);
+	// 	pros::delay(100);
+	// }
+	setLeverState(LeverState::INTAKING);
+	pros::delay(200);
+	chassis.tank(0, 0);
+
+
+	hoodPiston.extend();																					   // open hood
+	leverSpeed = 100;
+	setLeverState(LeverState::SCORING);
+	while (getLeverState() == LeverState::SCORING);
+	
+}
+void goalRush(){
+	turn.setGains(100, .15, .1);
+	chassis.setPose(14, 48, M_PI_2);
+	chassis.startTracking();
+	setLeverState(LeverState::INTAKING);
+	chassis.moveToPose({.targetPose = {47.8, 48, 0}, .timeout = 3000, .maxMoveSpeed = 115}); // line up with match load
+	matchLoadPiston.extend();															  // lower match load
+	liftPiston.extend();																  // raise lift
+	hoodPiston.retract();																  // close hood
+	chassis.turnToAngle({.targetAngle = 180, .timeout = 2000, .maxTurnSpeed = 100});		  // face match load
+	chassis.moveToPose({.targetPose = {48.5, 68.5, 0}, .timeout = 1000, .maxMoveSpeed = 50}); // ram to match load
+	chassis.tank(23, 23);
+	pros::delay(350);
+	chassis.tank(0,0);
+	pros::delay(800);
 	chassis.tank(75,75);
 	pros::delay(300);
 	chassis.tank(0,0);
@@ -35,7 +113,7 @@ void goalRush(){
 
 	// Long Goal Score 1
 	setLeverState(LeverState::IDLE);
-	chassis.moveToPose({.targetPose = {48, 24, 0}, .timeout = 1500, .maxMoveSpeed = 115, .maxTurnSpeed = 80}); // ram to match load
+	chassis.moveToPose({.targetPose = {48.5, 24, 0}, .timeout = 1500, .maxMoveSpeed = 115, .maxTurnSpeed = 80}); // ram to match load
 	// for(int i = 0; i < 3; i++){
 	// 	chassis.tank(-25, 100);
 	// 	pros::delay(100);
@@ -57,10 +135,10 @@ void goalRush(){
 	chassis.moveToPose({.targetPose = {48.5, 42, 0}, .timeout = 3000, .maxMoveSpeed = 115, .maxTurnSpeed = 100, .turnStartTime = 1000});
 	hoodPiston.retract();
 	turn.setI(.2);
-	chassis.turnToAngle({.targetAngle = 142, .timeout = 3000, .maxTurnSpeed = 100, .smallErrorRange=1, .largeErrorRange=2});
+	chassis.turnToAngle({.targetAngle = 137, .timeout = 3000, .maxTurnSpeed = 100, .smallErrorRange=1, .largeErrorRange=2});
 	matchLoadPiston.retract();
-	chassis.moveToPose({.targetPose = {37, 5, 0}, .timeout = 1500, .maxMoveSpeed = 100, .turnStartTime = 200});
-	controller.set_text(0, 0, chassis.getPose().to_string());
+	chassis.moveToPose({.targetPose = {37, 5, 0}, .timeout = 1500, .maxMoveSpeed = 100, .turnStartTime = 190});
+	// controller.set_text(0, 0, chassis.getPose().to_string());
 }
 
 void AWP(){
